@@ -9,11 +9,23 @@ namespace JpegDump
     enum JpegMarker
     {
         TEM = 0x01,
-        SOF = 0xc0, // Start Of Frame (baseline DCT) 
-        SOF2 = 0xc2, // Start Of Frame (progressive DCT) 
+        // Start of Frame - descriptions from CCITT ITU T.81 09/92
+        StartOfFrame0 = 0xc0,  // baseline DCT process frame marker
+        StartOfFrame1,  // extended sequential DCT frame marker, Huffman coding
+        StartOfFrame2,  // progressive DCT frame marker, Huffman coding
+        StartOfFrame3,  // lossless process frame marker, Huffman coding
         DHT = 0xc4,
+        StartOfFrame5,  // differential sequential DCT frame marker, Huffman coding
+        StartOfFrame6,  // differential progressive DCT frame marker, Huffman coding
+        StartOfFrame7,  // differential lossless process frame marker, Huffman coding
         JPGA = 0xc8,
+        StartOfFrame9,  // sequential DCT frame marker, arithmetic coding
+        StartOfFrame10, // progressive DCT frame marker, arithmetic coding
+        StartOfFrame11, // lossless process frame marker, arithmetic coding
         DAC = 0xcc,
+        StartOfFrame13, // differential sequential DCT frame marker, arithmetic coding
+        StartOfFrame14, // differential progressive DCT frame marker, arithmetic coding
+        StartOfFrame15, // differential lossless process frame marker, arithmetic coding
         Restart0 = 0xD0,                   // RST0
         Restart1 = 0xD1,                   // RST1
         Restart2 = 0xD2,                   // RST2
@@ -94,7 +106,7 @@ namespace JpegDump
         {
             //  FFD0 to FFD9 and FF01, markers without size.
 
-            switch ((JpegMarker) markerCode)
+            switch ((JpegMarker)markerCode)
             {
                 case JpegMarker.Restart0:
                 case JpegMarker.Restart1:
@@ -195,6 +207,59 @@ namespace JpegDump
 
                 case JpegMarker.ApplicationData0 + 15:
                     DumpApplicationData15();
+                    break;
+
+
+                case JpegMarker.StartOfFrame0:
+                    Console.WriteLine("{0:D8} Marker 0xFF{1:X}: {2} baseline DCT process frame marker", GetStartOffset(), markerCode, typeof(JpegMarker).GetEnumName(markerCode));
+                    break;
+
+                case JpegMarker.StartOfFrame1:
+                    Console.WriteLine("{0:D8} Marker 0xFF{1:X}: {2} extended sequential DCT frame marker, Huffman coding", GetStartOffset(), markerCode, typeof(JpegMarker).GetEnumName(markerCode));
+                    break;
+
+                case JpegMarker.StartOfFrame2:
+                    Console.WriteLine("{0:D8} Marker 0xFF{1:X}: {2} progressive DCT frame marker, Huffman coding", GetStartOffset(), markerCode, typeof(JpegMarker).GetEnumName(markerCode));
+                    break;
+
+                case JpegMarker.StartOfFrame3:
+                    Console.WriteLine("{0:D8} Marker 0xFF{1:X}: {2} lossless process frame marker, Huffman coding", GetStartOffset(), markerCode, typeof(JpegMarker).GetEnumName(markerCode));
+                    break;
+
+                case JpegMarker.StartOfFrame5:
+                    Console.WriteLine("{0:D8} Marker 0xFF{1:X}: {2} differential sequential DCT frame marker, Huffman coding", GetStartOffset(), markerCode, typeof(JpegMarker).GetEnumName(markerCode));
+                    break;
+
+                case JpegMarker.StartOfFrame6:
+                    Console.WriteLine("{0:D8} Marker 0xFF{1:X}: {2} differential progressive DCT frame marker, Huffman coding", GetStartOffset(), markerCode, typeof(JpegMarker).GetEnumName(markerCode));
+                    break;
+
+                case JpegMarker.StartOfFrame7:
+                    Console.WriteLine("{0:D8} Marker 0xFF{1:X}: {2} differential lossless process frame marker, Huffman coding", GetStartOffset(), markerCode, typeof(JpegMarker).GetEnumName(markerCode));
+                    break;
+
+                case JpegMarker.StartOfFrame9:
+                    Console.WriteLine("{0:D8} Marker 0xFF{1:X}: {2} sequential DCT frame marker, arithmetic coding", GetStartOffset(), markerCode, typeof(JpegMarker).GetEnumName(markerCode));
+                    break;
+
+                case JpegMarker.StartOfFrame10:
+                    Console.WriteLine("{0:D8} Marker 0xFF{1:X}: {2} progressive DCT frame marker, arithmetic coding", GetStartOffset(), markerCode, typeof(JpegMarker).GetEnumName(markerCode));
+                    break;
+
+                case JpegMarker.StartOfFrame11:
+                    Console.WriteLine("{0:D8} Marker 0xFF{1:X}: {2} lossless process frame marker, arithmetic coding", GetStartOffset(), markerCode, typeof(JpegMarker).GetEnumName(markerCode));
+                    break;
+
+                case JpegMarker.StartOfFrame13:
+                    Console.WriteLine("{0:D8} Marker 0xFF{1:X}: {2} differential sequential DCT frame marker, arithmetic coding", GetStartOffset(), markerCode, typeof(JpegMarker).GetEnumName(markerCode));
+                    break;
+
+                case JpegMarker.StartOfFrame14:
+                    Console.WriteLine("{0:D8} Marker 0xFF{1:X}: {2} differential progressive DCT frame marker, arithmetic coding", GetStartOffset(), markerCode, typeof(JpegMarker).GetEnumName(markerCode));
+                    break;
+
+                case JpegMarker.StartOfFrame15:
+                    Console.WriteLine("{0:D8} Marker 0xFF{1:X}: {2} differential lossless process frame marker, arithmetic coding", GetStartOffset(), markerCode, typeof(JpegMarker).GetEnumName(markerCode));
                     break;
 
                 case JpegMarker.Comment:
@@ -525,7 +590,7 @@ namespace JpegDump
 
             // Check for 'Photoshop marker'
             string magic = "Photoshop 3.0";
-            string signature = System.Text.Encoding.ASCII.GetString((byte[]) dataBuffer, 0, magic.Length);
+            string signature = System.Text.Encoding.ASCII.GetString((byte[])dataBuffer, 0, magic.Length);
 
             if (signature == magic)
             {
@@ -538,12 +603,12 @@ namespace JpegDump
                     /* print the OSType as text -- it should always be '8BIM' */
                     Console.WriteLine("{0:D8}  OSType: {1}", startPosition, OSType);
 
-                    uint resourceType = ConvertToUint16FromBigEndian(dataBuffer, index+4);
+                    uint resourceType = ConvertToUint16FromBigEndian(dataBuffer, index + 4);
                     string resourceName = "";
-                    int nameLength = dataBuffer[index+6];
+                    int nameLength = dataBuffer[index + 6];
                     if (nameLength > 0)
                     {
-                        resourceName = System.Text.Encoding.ASCII.GetString((byte[])dataBuffer, index+7, nameLength);
+                        resourceName = System.Text.Encoding.ASCII.GetString((byte[])dataBuffer, index + 7, nameLength);
                     }
                     index += 7 + nameLength;
 
@@ -558,8 +623,8 @@ namespace JpegDump
                     Console.WriteLine("{0:D8}  Resource {1:x} {2}", startPosition, resourceType, resourceName);
                     Console.WriteLine("{0:D8}  Size = {1}", startPosition, resourceSize);
                     uint segmentMarker = ConvertToUint16FromBigEndian(dataBuffer, index);
-                    uint segmentType = dataBuffer[index+2];
-                    uint segmentSize = ConvertToUint16FromBigEndian(dataBuffer, index+3);
+                    uint segmentType = dataBuffer[index + 2];
+                    uint segmentSize = ConvertToUint16FromBigEndian(dataBuffer, index + 3);
 
                     index = index + 5;
                     string segmentText = System.Text.Encoding.ASCII.GetString((byte[])dataBuffer, index, (int)segmentSize);
@@ -576,7 +641,7 @@ namespace JpegDump
                     {
                         Console.WriteLine("{0:D8}  Text: {1}", startPosition + index, segmentText);
                     }
-                    index = index + (int) segmentSize;
+                    index = index + (int)segmentSize;
                     if ((index & 1) == 1)
                         index++;
                 }
@@ -756,15 +821,15 @@ namespace JpegDump
         }
     }
 
-
-    public class Program
+        public class Program
     {
         private static void Main(string[] args)
         {
             // debugging hack
             args = new string[]
             {
-                @"D:\Temp\QLsikRcl_t.jpg"
+                @"D:\Coding\CelebWatcher\testimages\lady-gaga-braless-219949-thefappeningblog.com_.jpg",
+                @"D:\Coding\CelebWatcher\testimages\lady-gaga-braless-219949-thefappeningblog.com__002.jpg"
             };
 
             if (args.Length < 1)
@@ -773,25 +838,29 @@ namespace JpegDump
             }
             else
             {
-
-                try
+                foreach (var arg in args)
                 {
-                    using (var stream = new FileStream(args[0], FileMode.Open))
+
+                    try
                     {
-                        Console.WriteLine("Dumping JPEG file: {0}", args[0]);
-                        Console.WriteLine("=============================================================================");
-                        using (var jpegStreamReader = new JpegStreamReader(stream))
+                        using (var stream = new FileStream(arg, FileMode.Open))
                         {
-                            jpegStreamReader.Dump();
+                            Console.WriteLine("=============================================================================");
+                            Console.WriteLine("Dumping JPEG file: {0}", arg);
+                            Console.WriteLine("=============================================================================");
+                            using (var jpegStreamReader = new JpegStreamReader(stream))
+                            {
+                                jpegStreamReader.Dump();
+                            }
                         }
                     }
-                }
-                catch (IOException e)
-                {
-                    Console.WriteLine("Failed to open \\ parse file {0}, error: ", args[0], e.Message);
+                    catch (IOException e)
+                    {
+                        Console.WriteLine("Failed to open \\ parse file {0}, error: ", arg, e.Message);
+                    }
                 }
             }
-            return;
+            System.Diagnostics.Debugger.Break();
         }
    }
 }
