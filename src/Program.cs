@@ -622,28 +622,39 @@ namespace JpegDump
 
                     Console.WriteLine("{0:D8}  Resource {1:x} {2}", startPosition, resourceType, resourceName);
                     Console.WriteLine("{0:D8}  Size = {1}", startPosition, resourceSize);
-                    uint segmentMarker = ConvertToUint16FromBigEndian(dataBuffer, index);
-                    uint segmentType = dataBuffer[index + 2];
-                    uint segmentSize = ConvertToUint16FromBigEndian(dataBuffer, index + 3);
-
-                    index = index + 5;
-                    string segmentText = System.Text.Encoding.ASCII.GetString((byte[])dataBuffer, index, (int)segmentSize);
-
-                    if (segmentType == 0x28)
+                    while (index < dataBuffer.Count)
                     {
-                        // Special Instructions
-                        if (segmentText.StartsWith("FBMD"))
+
+                        uint segmentMarker = ConvertToUint16FromBigEndian(dataBuffer, index);
+                        uint segmentType = dataBuffer[index + 2];
+                        uint segmentSize = ConvertToUint16FromBigEndian(dataBuffer, index + 3);
+
+                        index = index + 5;
+                        string segmentText = "";
+                        if (index + segmentSize <= dataBuffer.Count)
+                            segmentText = System.Text.Encoding.ASCII.GetString((byte[])dataBuffer, index, (int)segmentSize);
+
+                        if (segmentType == 0x28)
                         {
-                            TryDumpFbmd(segmentText);
+                            // Special Instructions
+                            if (segmentText.StartsWith("FBMD"))
+                            {
+                                TryDumpFbmd(segmentText);
+                            }
                         }
+                        else if (segmentType == 0x67)
+                        {
+                            // Original Transmission Reference
+                            Console.WriteLine("{0:D8}  Original Transmission Reference  Text: {1}", startPosition + index, segmentText);
+                        }
+                        else
+                        {
+                            Console.WriteLine("{0:D8}  Text: {1}", startPosition + index, segmentText);
+                        }
+                        index = index + (int)segmentSize;
+                        //if ((index & 1) == 1)
+                        //    index++;
                     }
-                    else
-                    {
-                        Console.WriteLine("{0:D8}  Text: {1}", startPosition + index, segmentText);
-                    }
-                    index = index + (int)segmentSize;
-                    if ((index & 1) == 1)
-                        index++;
                 }
             }
         }
@@ -825,12 +836,6 @@ namespace JpegDump
     {
         private static void Main(string[] args)
         {
-            // debugging hack
-            args = new string[]
-            {
-                @"D:\Coding\CelebWatcher\testimages\lady-gaga-braless-219949-thefappeningblog.com_.jpg",
-                @"D:\Coding\CelebWatcher\testimages\lady-gaga-braless-219949-thefappeningblog.com__002.jpg"
-            };
 
             if (args.Length < 1)
             {
