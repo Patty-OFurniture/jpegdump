@@ -1,6 +1,6 @@
 // Copyright (c) Victor Derks.
 // SPDX-License-Identifier: MIT
-// Modifications by Patty-OFurniture (github)
+// Modifications by Patty-OFurniture(github)
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -621,7 +621,10 @@ namespace JpegDump
                     if ((resourceSize & 1) == 1)
                         resourceSize++;
 
+                    string resourceDescription = GetAdobeResourceDescription(resourceType);
+
                     Console.WriteLine("{0:D8}  Resource {1:x} {2}", startPosition, resourceType, resourceName);
+                    Console.WriteLine("{0:D8}  Description = {1}", startPosition, resourceDescription);
                     Console.WriteLine("{0:D8}  Size = {1}", startPosition, resourceSize);
                     while (index < dataBuffer.Count)
                     {
@@ -658,6 +661,106 @@ namespace JpegDump
                     }
                 }
             }
+        }
+        
+        //https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577411_20528
+        private static string GetAdobeResourceDescription(uint resourceType)
+        {
+            switch(resourceType)
+            {
+                case 0x03EE: return "Names of the alpha channels as a series of Pascal strings.";
+                case 0x03EF: return "(Obsolete) See ID 1077DisplayInfo structure. See Appendix A in Photoshop API Guide.pdf.";
+                case 0x03F0: return "The caption as a Pascal string.";
+                case 0x03F1: return "Border information. Contains a fixed number (2 bytes real, 2 bytes fraction) for the border width, and 2 bytes for border units (1 = inches, 2 = cm, 3 = points, 4 = picas, 5 = columns).";
+                case 0x03F2: return "Background color. See See Color structure.";
+                case 0x03F3: return "Print flags. A series of one-byte boolean values (see Page Setup dialog): labels, crop marks, color bars, registration marks, negative, flip, interpolate, caption, print flags.";
+                case 0x03F4: return "Grayscale and multichannel halftoning information";
+                case 0x03F5: return "Color halftoning information";
+                case 0x03F6: return "Duotone halftoning information";
+                case 0x03F7: return "Grayscale and multichannel transfer function";
+                case 0x03F8: return "Color transfer functions";
+                case 0x03F9: return "Duotone transfer functions";
+                case 0x03FA: return "Duotone image information";
+                case 0x03FB: return "Two bytes for the effective black and white values for the dot range";
+                case 0x03FC: return "(Obsolete)";
+                case 0x03FD: return "EPS options";
+                case 0x03FE: return "Quick Mask information. 2 bytes containing Quick Mask channel ID; 1- byte boolean indicating whether the mask was initially empty.";
+                case 0x03FF: return "(Obsolete)";
+                case 0x0400: return "Layer state information. 2 bytes containing the index of target layer (0 = bottom layer).";
+                case 0x0401: return "Working path (not saved). See See Path resource format.";
+                case 0x0402: return "Layers group information. 2 bytes per layer containing a group ID for the dragging groups. Layers in a group have the same group ID.";
+                case 0x0403: return "(Obsolete)";
+                case 0x0404: return "IPTC-NAA record. Contains the File Info... information. See the documentation in the IPTC folder of the Documentation folder. ";
+                case 0x0405: return "Image mode for raw format files";
+                case 0x0406: return "JPEG quality. Private.";
+                case 0x0408: return "(Photoshop 4.0) Grid and guides information. See See Grid and guides resource format.";
+                case 0x0409: return "(Photoshop 4.0) Thumbnail resource for Photoshop 4.0 only. See See Thumbnail resource format.";
+                case 0x040A: return "(Photoshop 4.0) Copyright flag. Boolean indicating whether image is copyrighted. Can be set via Property suite or by user in File Info...";
+                case 0x040B: return "(Photoshop 4.0) URL. Handle of a text string with uniform resource locator. Can be set via Property suite or by user in File Info...";
+                case 0x040C: return "(Photoshop 5.0) Thumbnail resource (supersedes resource 1033). See See Thumbnail resource format. ";
+                case 0x040D: return "(Photoshop 5.0) Global Angle. 4 bytes that contain an integer between 0 and 359, which is the global lighting angle for effects layer. If not present, assumed to be 30.";
+                case 0x040E: return "(Obsolete) See ID 1073 below. (Photoshop 5.0) Color samplers resource. See See Color samplers resource format.";
+                case 0x040F: return "(Photoshop 5.0) ICC Profile. The raw bytes of an ICC (International Color Consortium) format profile. See ICC1v42_2006-05.pdf in the Documentation folder and icProfileHeader.h in Sample Code\\Common\\Includes . ";
+                case 0x0410: return "(Photoshop 5.0) Watermark. One byte. ";
+                case 0x0411: return "(Photoshop 5.0) ICC Untagged Profile. 1 byte that disables any assumed profile handling when opening the file. 1 = intentionally untagged.";
+                case 0x0412: return "(Photoshop 5.0) Effects visible. 1-byte global flag to show/hide all the effects layer. Only present when they are hidden.";
+                case 0x0413: return "(Photoshop 5.0) Spot Halftone. 4 bytes for version, 4 bytes for length, and the variable length data.";
+                case 0x0414: return "(Photoshop 5.0) Document-specific IDs seed number. 4 bytes: Base value, starting at which layer IDs will be generated (or a greater value if existing IDs already exceed it). Its purpose is to avoid the case where we add layers, flatten, save, open, and then add more layers that end up with the same IDs as the first set.";
+                case 0x0415: return "(Photoshop 5.0) Unicode Alpha Names. Unicode string";
+                case 0x0416: return "(Photoshop 6.0) Indexed Color Table Count. 2 bytes for the number of colors in table that are actually defined";
+                case 0x0417: return "(Photoshop 6.0) Transparency Index. 2 bytes for the index of transparent color, if any.";
+                case 0x0419: return "(Photoshop 6.0) Global Altitude. 4 byte entry for altitude";
+                case 0x041A: return "(Photoshop 6.0) Slices. See See Slices resource format.";
+                case 0x041B: return "(Photoshop 6.0) Workflow URL. Unicode string";
+                case 0x041C: return "(Photoshop 6.0) Jump To XPEP. 2 bytes major version, 2 bytes minor version, 4 bytes count. Following is repeated for count: 4 bytes block size, 4 bytes key, if key = 'jtDd' , then next is a Boolean for the dirty flag; otherwise it's a 4 byte entry for the mod date.";
+                case 0x041D: return "(Photoshop 6.0) Alpha Identifiers. 4 bytes of length, followed by 4 bytes each for every alpha identifier.";
+                case 0x041E: return "(Photoshop 6.0) URL List. 4 byte count of URLs, followed by 4 byte long, 4 byte ID, and Unicode string for each count.";
+                case 0x0421: return "(Photoshop 6.0) Version Info. 4 bytes version, 1 byte hasRealMergedData , Unicode string: writer name, Unicode string: reader name, 4 bytes file version.";
+                case 0x0422: return "(Photoshop 7.0) EXIF data 1. See http://www.kodak.com/global/plugins/acrobat/en/service/digCam/exifStandard2.pdf";
+                case 0x0423: return "(Photoshop 7.0) EXIF data 3. See http://www.kodak.com/global/plugins/acrobat/en/service/digCam/exifStandard2.pdf";
+                case 0x0424: return "(Photoshop 7.0) XMP metadata. File info as XML description. See http://www.adobe.com/devnet/xmp/";
+                case 0x0425: return "(Photoshop 7.0) Caption digest. 16 bytes: RSA Data Security, MD5 message-digest algorithm";
+                case 0x0426: return "(Photoshop 7.0) Print scale. 2 bytes style (0 = centered, 1 = size to fit, 2 = user defined). 4 bytes x location (floating point). 4 bytes y location (floating point). 4 bytes scale (floating point)";
+                case 0x0428: return "(Photoshop CS) Pixel Aspect Ratio. 4 bytes (version = 1 or 2), 8 bytes double, x / y of a pixel. Version 2, attempting to correct values for NTSC and PAL, previously off by a factor of approx. 5%.";
+                case 0x0429: return "(Photoshop CS) Layer Comps. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure)";
+                case 0x042A: return "(Photoshop CS) Alternate Duotone Colors. 2 bytes (version = 1), 2 bytes count, following is repeated for each count: [ Color: 2 bytes for space followed by 4 * 2 byte color component ], following this is another 2 byte count, usually 256, followed by Lab colors one byte each for L, a, b. This resource is not read or used by Photoshop.";
+                case 0x042B: return "(Photoshop CS)Alternate Spot Colors. 2 bytes (version = 1), 2 bytes channel count, following is repeated for each count: 4 bytes channel ID, Color: 2 bytes for space followed by 4 * 2 byte color component. This resource is not read or used by Photoshop.";
+                case 0x042D: return "(Photoshop CS2) Layer Selection ID(s). 2 bytes count, following is repeated for each count: 4 bytes layer ID";
+                case 0x042E: return "(Photoshop CS2) HDR Toning information";
+                case 0x042F: return "(Photoshop CS2) Print info";
+                case 0x0430: return "(Photoshop CS2) Layer Group(s) Enabled ID. 1 byte for each layer in the document, repeated by length of the resource. NOTE: Layer groups have start and end markers";
+                case 0x0431: return "(Photoshop CS3) Color samplers resource. Also see ID 1038 for old format. See See Color samplers resource format.";
+                case 0x0432: return "(Photoshop CS3) Measurement Scale. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure)";
+                case 0x0433: return "(Photoshop CS3) Timeline Information. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure)";
+                case 0x0434: return "(Photoshop CS3) Sheet Disclosure. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure)";
+                case 0x0435: return "(Photoshop CS3) DisplayInfo structure to support floating point clors. Also see ID 1007. See Appendix A in Photoshop API Guide.pdf .";
+                case 0x0436: return "(Photoshop CS3) Onion Skins. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure)";
+                case 0x0438: return "(Photoshop CS4) Count Information. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the count in the document. See the Count Tool.";
+                case 0x043A: return "(Photoshop CS5) Print Information. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the current print settings in the document. The color management options.";
+                case 0x043B: return "(Photoshop CS5) Print Style. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the current print style in the document. The printing marks, labels, ornaments, etc.";
+                case 0x043C: return "(Photoshop CS5) Macintosh NSPrintInfo. Variable OS specific info for Macintosh. NSPrintInfo. It is recommened that you do not interpret or use this data.";
+                case 0x043D: return "(Photoshop CS5) Windows DEVMODE. Variable OS specific info for Windows. DEVMODE. It is recommened that you do not interpret or use this data.";
+                case 0x043E: return "(Photoshop CS6) Auto Save File Path. Unicode string. It is recommened that you do not interpret or use this data.";
+                case 0x043F: return "(Photoshop CS6) Auto Save Format. Unicode string. It is recommened that you do not interpret or use this data.";
+                case 0x0440: return "(Photoshop CC) Path Selection State. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the current path selection state.";
+                case 0x0BB7: return "Name of clipping path. See See Path resource format.";
+                case 0x0BB8: return "(Photoshop CC) Origin Path Info. 4 bytes (descriptor version = 16), Descriptor (see See Descriptor structure) Information about the origin path data.";
+                case 0x1B58: return "Image Ready variables. XML representation of variables definition";
+                case 0x1B59: return "Image Ready data sets";
+                case 0x1B5A: return "Image Ready default selected state";
+                case 0x1B5B: return "Image Ready 7 rollover expanded state";
+                case 0x1B5C: return "Image Ready rollover expanded state";
+                case 0x1B5D: return "Image Ready save layer settings";
+                case 0x1B5E: return "Image Ready version";
+                case 0x1F40: return "(Photoshop CS3) Lightroom workflow, if present the document is in the middle of a Lightroom workflow.";
+                case 0x2710: return "Print flags information. 2 bytes version ( = 1), 1 byte center crop marks, 1 byte ( = 0), 4 bytes bleed width value, 2 bytes bleed width scale.";
+            };
+             if (resourceType >= 0x07D0 && resourceType <= 0x0BB6)
+                return "Path Information (saved paths). See See Path resource format.";
+            if (resourceType >= 0x0FA0 && resourceType <= 0x1387)
+                return "Plug-In resource(s). Resources added by a plug-in. See the plug-in API found in the SDK documentation";
+
+            return "[UNKNOWN]";
         }
 
         private static void TryDumpFbmd(string fbmd)
@@ -837,7 +940,6 @@ namespace JpegDump
     {
         private static void Main(string[] args)
         {
-
             if (args.Length < 1)
             {
                 Console.WriteLine("Usage: jpegdump <filename>");
