@@ -1,5 +1,6 @@
 // Copyright (c) Victor Derks.
 // SPDX-License-Identifier: MIT
+// Modifications by Patty-OFurniture (github)
 using System;
 using System.Collections.Generic;
 using System.IO;
