@@ -590,8 +590,16 @@ namespace JpegDump
             //    return;
 
             // Check for 'Photoshop marker'
+            // TODO: Adobe_CM?
+            // https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577411_20528
             string magic = "Photoshop 3.0";
             string signature = System.Text.Encoding.ASCII.GetString((byte[])dataBuffer, 0, magic.Length);
+
+            if (signature != magic)
+            {
+                magic = "Adobe_Photoshop2.5";
+                signature = System.Text.Encoding.ASCII.GetString((byte[])dataBuffer, 0, magic.Length);
+            }
 
             if (signature == magic)
             {
@@ -605,16 +613,24 @@ namespace JpegDump
                     Console.WriteLine("{0:D8}  OSType: {1}", startPosition, OSType);
 
                     uint resourceType = ConvertToUint16FromBigEndian(dataBuffer, index + 4);
+
+                    index += 6;
+
+                    // Name: Pascal string, padded to make the size even (a null name consists of two bytes of 0)
                     string resourceName = "";
-                    int nameLength = dataBuffer[index + 6];
+                    int nameLength = dataBuffer[index++];
                     if (nameLength > 0)
                     {
-                        resourceName = System.Text.Encoding.ASCII.GetString((byte[])dataBuffer, index + 7, nameLength);
-                    }
-                    index += 7 + nameLength;
+                        if ((nameLength & 1) == 1)
+                            nameLength++;
+                        index += nameLength;
 
-                    if ((index & 1) == 1)
-                        index++;
+                        resourceName = System.Text.Encoding.ASCII.GetString((byte[])dataBuffer, index, nameLength);
+                    }
+                    else
+                    {
+                        index++; // null name
+                    }
 
                     uint resourceSize = ConvertToUint32BigEndian(dataBuffer, index);
                     index += 4;
@@ -638,13 +654,20 @@ namespace JpegDump
                         if (index + segmentSize <= dataBuffer.Count)
                             segmentText = System.Text.Encoding.ASCII.GetString((byte[])dataBuffer, index, (int)segmentSize);
 
+                        // http://www.iptc.org/std/IIM/4.2/specification/IIMV4.2.pdf
+                        // constants in "Section 1.4 Application Record No. 2"
                         if (segmentType == 0x28)
                         {
                             // Special Instructions
                             if (segmentText.StartsWith("FBMD"))
                             {
-                                TryDumpFbmd(segmentText);
+                                TryDumpFbmd(segmentText, startPosition);
                             }
+                        }
+                        else if (segmentType == 0x41)
+                        {
+                            // Originating Program
+                            Console.WriteLine("{0:D8}  Originating Program Text: {1}", startPosition + index, segmentText);
                         }
                         else if (segmentType == 0x67)
                         {
@@ -656,14 +679,13 @@ namespace JpegDump
                             Console.WriteLine("{0:D8}  Text: {1}", startPosition + index, segmentText);
                         }
                         index = index + (int)segmentSize;
-                        //if ((index & 1) == 1)
-                        //    index++;
+                        if ((index & 1) == 1)
+                            index++;
                     }
                 }
             }
         }
-        
-        //https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/#50577411_20528
+
         private static string GetAdobeResourceDescription(uint resourceType)
         {
             switch(resourceType)
@@ -763,7 +785,7 @@ namespace JpegDump
             return "[UNKNOWN]";
         }
 
-        private static void TryDumpFbmd(string fbmd)
+        private static void TryDumpFbmd(string fbmd, long startPosition)
         {
             var sb = new System.Text.StringBuilder("FBMD ");
             var ui = new System.Text.StringBuilder("             ");
@@ -788,8 +810,8 @@ namespace JpegDump
                 ui.Append(" ");
             }
 
-            Console.WriteLine("          {0}", sb.ToString());
-            Console.WriteLine("          {0}", ui.ToString());
+            Console.WriteLine("{0:D8}  {1}", startPosition, sb.ToString());
+            Console.WriteLine("{0:D8}  {1}", startPosition, ui.ToString());
 
         }
 
@@ -964,7 +986,7 @@ namespace JpegDump
                     }
                     catch (IOException e)
                     {
-                        Console.WriteLine("Failed to open \\ parse file {0}, error: ", arg, e.Message);
+                        Console.WriteLine("Failed to open \\ parse file {0}, error: {1}", arg, e.Message);
                     }
                 }
             }
