@@ -958,7 +958,7 @@ namespace JpegDump
         }
     }
 
-        public class Program
+    public class Program
     {
         private static void Main(string[] args)
         {
