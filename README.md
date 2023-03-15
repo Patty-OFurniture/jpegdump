@@ -7,3 +7,4 @@ The image shows output from a modified JpegDump (Second link, C# version, with i
 
 FBMD 23 (I don't know what 23 means), 9 markers, and then each offset to a SOS marker. Not a privacy issue. There's another bit I'm looking at, but I don't have anything to share there. Point being, this particular tag seems harmless. I'd appreciate feedback, this is fairly preliminary but it matches every file I've tried.
 
+![FBMD Example](https://github.com/Patty-OFurniture/jpegdump/raw/main/FBMD%20example.png)
