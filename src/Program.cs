@@ -1,15 +1,48 @@
+//#define SAVE_OUTPUT
 // Copyright (c) Victor Derks.
 // SPDX-License-Identifier: MIT
 // Modifications by Patty-OFurniture(github)
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace JpegDump
 {
     enum JpegMarker
     {
-        TEM = 0x01,
+        TEM = 0x01,       /* temporary private use for arithmetic coding */
+
+        /* 0x02 -> 0xbf reserved in JPEG 94/97*/
+
+        /* JPEG 2000 - defined in IEC 15444-1 "JPEG 2000 Core (part 1)" */
+        /* delimiters */
+        SOC = 0x4f, /* start of codestream */
+        SOT = 0x90, /* start of tile */
+        SOD = 0x93, /* start of data */
+        EOC = 0xd9, /* end of codestream */
+                    /* fixed information segment */
+        SIZ = 0x51, /* image and tile size */
+                    /* functional segments */
+        COD = 0x52, /* coding style default */
+        COC = 0x53, /* coding style component */
+        RGN = 0x5e, /* region of interest */
+        QCD = 0x5c,       /* quantization default */
+        QCC = 0x5d, /* quantization component */
+        POC = 0x5f, /* progression order change */
+                    /* pointer segments */
+        TLM = 0x55, /* tile-part lengths */
+        PLM = 0x57, /* packet length (main header) */
+        PLT = 0x58, /* packet length (tile-part header) */
+        PPM = 0x60, /* packed packet headers (main header) */
+        PPT = 0x61, /* packet packet headers (tile-part header) */
+                    /* bitstream internal markers and segments */
+        SOP = 0x91, /* start of packet */
+        EPH = 0x92, /* end of packet header */
+                    /* informational segments */
+        CRG = 0x63, /* component registration */
+        Comment2k = 0x64,	/* comment */
+
         // Start of Frame - descriptions from CCITT ITU T.81 09/92
         StartOfFrame0 = 0xc0,  // baseline DCT process frame marker
         StartOfFrame1,  // extended sequential DCT frame marker, Huffman coding
@@ -88,7 +121,19 @@ namespace JpegDump
                     int markerCode = reader.BaseStream.ReadByte();
                     if (IsMarkerCode(markerCode))
                     {
-                        DumpMarker(markerCode);
+                        try
+                        {
+                            DumpMarker(markerCode);
+                        }
+                        catch (Exception e)
+                        {
+                            do
+                            {
+                                Console.WriteLine(e.Message);
+                                Console.WriteLine(e.StackTrace);
+                                e = e.InnerException;
+                            } while (e != null);
+                        }
                     }
                 }
             }
@@ -672,6 +717,7 @@ namespace JpegDump
                         else if (segmentType == 0x67)
                         {
                             // Original Transmission Reference
+                            System.Diagnostics.Debug.WriteLine("{0:D8}  Original Transmission Reference  Text: {1}", startPosition + index, segmentText);
                             Console.WriteLine("{0:D8}  Original Transmission Reference  Text: {1}", startPosition + index, segmentText);
                         }
                         else
@@ -958,8 +1004,16 @@ namespace JpegDump
         }
     }
 
-    public class Program
+        public class Program
     {
+        private static void Decode(string target)
+        {
+            target = target.Replace('-', '+').Replace('_', '/');
+            var bytes = Convert.FromBase64String(target);
+            var result = BitConverter.ToString(bytes);
+            Console.WriteLine(target + " || " + result);
+        }
+
         private static void Main(string[] args)
         {
             if (args.Length < 1)
@@ -990,6 +1044,11 @@ namespace JpegDump
                     }
                 }
             }
+#if SAVE_OUTPUT
+            writer.Dispose();
+            ostrm.Dispose();
+#endif
+
             System.Diagnostics.Debugger.Break();
         }
    }
