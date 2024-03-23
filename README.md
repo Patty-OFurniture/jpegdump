@@ -1,6 +1,8 @@
 # jpegdump
 Simple C# console application that dumps the marker segments of a JPEG and JPEG-LS file.
 
+Mostly for customization if you use C#, but I recommend ExifTool https://exiftool.org/ExifTool.html
+
 Modifications by Patty-OFurniture to decode the FBMD metadata embedded in IPTC resources.  It's a series of hex characters embedded in JPEG files from FaceBook. It's a set of increasing values, and articles like this one have hyped it as some super privacy invading junk. Well, it's just** the offsets of all of the SOS JPEG markers**. JpegDump or ExifTool, should dump the markers to your satisfaction.
 
 The image shows output from a modified JpegDump (Second link, C# version, with info from the first link, straight and confusing C). It dumps the FBMD medadata in DWORD chunks, and I have the results in Notepad++ with highlighting showing the matching offsets. Yes I had to stitch it together a bit to get multiple highlights.
